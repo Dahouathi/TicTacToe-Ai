@@ -10,29 +10,16 @@ size = 3
 width=480
 height=480
 W=height/size
-
+def permute(n):
+    if n==1 :return 2
+    if n==2 : return 1
 class Player():
     """ class player contain the type of the player"""
-    def __init__(self,state,type) :
+    def __init__(self,state) :
         self.state = state #can be an X or O
-        self.type  = type #humain_player, AI_player, random_player
         self.wins = False
-    def choose_move(self,matrix):
-        Game_over=False
-        if self.type=='random':
-            list_moves=[]
-            for i in range(size):
-                for j in range(size):
-                    if matrix[i,j]==0 : list_moves.append((i,j))
-            # print('list_moves')
-            # print(list_moves)
-            if(len(list_moves)!=0):
-                i,j=choice(list_moves)
-                return i,j,Game_over
-            Game_over=True
-            # print('its tie')
-            return (-1,-1 ,Game_over) #when it's tie
-
+    
+        
     def draw_action(self,i,j,matrix):
         i,j=j,i # permutation cos the pyglet orientation is reversed 
         
@@ -136,9 +123,51 @@ class Player():
         # print('next tour')
         return False
 
+class RandomPlayer(Player):
+    def __init__(self, state):
+        super().__init__(state)
+        self.type='random'
 
-                        
-                        
+    def choose_move(self,matrix):
+        Game_over=False
+        
+        list_moves=[]
+        for i in range(size):
+            for j in range(size):
+                if matrix[i,j]==0 : list_moves.append((i,j))
+        # print('list_moves')
+        # print(list_moves)
+        if(len(list_moves)!=0):
+            i,j=choice(list_moves)
+            return i,j,Game_over
+        Game_over=True
+        # print('its tie')
+        return (-1,-1 ,Game_over) #when it's tie       
+
+class HumanPlayer(Player):
+    def __init__(self, state):
+        super().__init__(state)
+        self.type='human'
+        self.i=-1
+        self.j=-1
+        
+    def choose_move(self,matrix):
+        Game_over=False
+        i=self.i
+        j=self.j
+        if self.state=='X':
+            n=1
+        else : n=2
+        if matrix[i,j]==n:
+            # print('this spot is already filled')
+            i=-1
+            j=-1
+        elif matrix[i,j]==permute(n):
+            print('u blind ?')
+            i=-1
+            j=-1
+        return i,j,Game_over
+        
 class Window (pyglet.window.Window):
     def __init__(self, X_player, O_player):
         super(Window, self).__init__(width, height, 'Tic Tac Toe')
@@ -178,8 +207,14 @@ class Window (pyglet.window.Window):
         pass
     def on_mouse_press(self, x, y, button, modifiers):
         print(x/width,y/height)
+        if self.current_player.type =='human':
+            i=int(x/W)
+            j=int(y/W)
+            self.current_player.i=size-1-j
+            self.current_player.j=i
+            print(self.current_player.i,self.current_player.j)
+            # self.current_player.draw_action(i,j,self.matrix)
         
-
     
     
     def on_draw(self):
@@ -217,8 +252,8 @@ class Window (pyglet.window.Window):
             
         
 if __name__ == '__main__':
-    X_player=Player('X','random')
-    O_player=Player('O','random')
+    X_player=HumanPlayer('X')
+    O_player=RandomPlayer('O')
     window = Window(X_player, O_player)
     pyglet.app.run()
 
