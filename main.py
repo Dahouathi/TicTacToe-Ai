@@ -58,7 +58,7 @@ class Player():
                                 if matrix[i-k,j+k]==n:
                                     count+=1
                             if count ==3:
-                                print('{} player Wins '.format(self.state))
+                                # print('{} player Wins '.format(self.state))
                                 self.wins=True
                                 exit = True
                             else : count=0
@@ -69,7 +69,7 @@ class Player():
                                     count+=1
                                 if count ==3 : break
                             if count ==3:
-                                print('{} player Wins '.format(self.state))
+                                # print('{} player Wins '.format(self.state))
                                 self.wins=True
                                 exit = True
                             else : count=0
@@ -80,7 +80,7 @@ class Player():
                                     count+=1
                                 if count ==3 : break
                             if count ==3:
-                                print('{} player Wins '.format(self.state))
+                                # print('{} player Wins '.format(self.state))
                                 self.wins=True
                                 exit = True
                             else : count=0
@@ -90,7 +90,7 @@ class Player():
                                     count+=1
                                 if count ==3 : break
                             if count ==3:
-                                print('{} player Wins '.format(self.state))
+                                # print('{} player Wins '.format(self.state))
                                 self.wins=True
                                 exit = True
                             else : count=0
@@ -106,7 +106,7 @@ class Player():
                                 if matrix[i-k,j+k]==n:
                                     count+=1
                             if count ==4:
-                                print('{} player Wins '.format(self.state))
+                                # print('{} player Wins '.format(self.state))
                                 self.wins=True
                                 exit = True
                             else : count=0
@@ -117,7 +117,7 @@ class Player():
                                     count+=1
                                 if count ==4 : break
                             if count ==4:
-                                print('{} player Wins '.format(self.state))
+                                # print('{} player Wins '.format(self.state))
                                 self.wins=True
                                 exit = True
                             else : count=0
@@ -128,7 +128,7 @@ class Player():
                                     count+=1
                                 if count ==4 : break
                             if count ==4:
-                                print('{} player Wins '.format(self.state))
+                                # print('{} player Wins '.format(self.state))
                                 self.wins=True
                                 exit = True
                             else : count=0
@@ -138,7 +138,7 @@ class Player():
                                     count+=1
                                 if count ==4 : break
                             if count ==4:
-                                print('{} player Wins '.format(self.state))
+                                # print('{} player Wins '.format(self.state))
                                 self.wins=True
                                 exit = True
                             else : count=0
@@ -198,48 +198,81 @@ class AIPlayer(Player):
         super().__init__(state) 
         self.type='AI'      
     def mini_max(self, matrix, depth=0, maximizer=True):#by default the maximizer is True bc it's the frist player
-        ide=id(matrix)
-
+        # ide=id(matrix)
+        # print(depth,matrix)
+        # print()
+        x,y=np.where(matrix==0)
         if self.state=='X': n=1
         else : n=2
         p=permute(n) #n is maximizer player nd p is minimizer 
-        score=evaluate(matrix)
-        print(depth , matrix)
-        if score!=-1: return score, -1, -1
+        score=evaluate(matrix) #return +10 if x wins -10 if 0 wins 0 if tie nd -1 if game still on
+        # print(depth , matrix)
+        if score!=-1: 
+            if n==1:
+                return score
+            else : return -score
         else:
             if maximizer:
                 score=-10000
                 
-                for i in range(size):
-                    for j in range(size):
-                        if matrix[i,j]==0:
-                            matrix[i,j]=n 
-                            value,k,l=self.mini_max(matrix,depth+1,False)
-                            score=max(score,value)
-                            if score==value:
-                                k=i
-                                l=j
-                            matrix[i,j]=0
-                return score,k,l
+                for i in range(len(x)):
+                    
+                        
+                    matrix[x[i],y[i]]=n 
+                    value=self.mini_max(matrix,depth+1,False)
+                    score=max(score,value)
+                    # if score==value:
+                    #     k=i
+                    #     l=j
+                    matrix[x[i],y[i]]=0
+                return score
             else :
                 score=10000
                 
-                for i in range(size):
-                    for j in range(size):
-                        if matrix[i,j]==0:
-                            matrix[i,j]=p 
-                            value,k,l=self.mini_max(matrix,depth+1,True)
-                            score=min(score,value)
-                            if score==value :
-                                k=i
-                                l=j
-                            matrix[i,j]=0
-                return score, k, l
+                for i in range(len(x)):
+                    
+                        
+                    matrix[x[i],y[i]]=p 
+                    value=self.mini_max(matrix,depth+1,True)
+                    score=min(score,value)
+                    # if score==value :
+                    #     k=i
+                    #     l=j
+                    matrix[x[i],y[i]]=0
+                return score
         
     def choose_move(self,matrix):
-        socre,i,j=self.mini_max(matrix)
-        return i,j ,False
+        x,y=np.where(matrix==0)
+        k=0
+        l=0
+        if self.state=='X': 
+           n=1
+        else : n=2
+        best_score=-10000
+        k,l=-1,-1
+        for i in range(len(x)):
+            matrix[x[i],y[i]]=n
+            score=self.mini_max(matrix,0,False)
+            # print(score,x[i],y[i])
+            if score>best_score:
+                best_score=score
 
+                k,l=x[i],y[i]
+            matrix[x[i],y[i]]=0
+        return k,l,False
+    # else:
+        #     best_score=+10000
+        #     for i in range(len(x)):
+        #         matrix[x[i],y[i]]=2
+        #         score=self.mini_max(matrix,False)
+        #         print(score,x[i],y[i])
+        #         if score<best_score:
+        #             best_score=score
+
+        #             k,l=x[i],y[i]
+        #         matrix[x[i],y[i]]=0
+        #     return k,l,False
+            
 
 class Window (pyglet.window.Window):
     def __init__(self, X_player, O_player):
@@ -338,8 +371,8 @@ def evaluate(matrix):
             
         
 if __name__ == '__main__':
-    X_player=AIPlayer('X')
-    O_player=HumanPlayer('O')
+    X_player=HumanPlayer('X')
+    O_player=AIPlayer('O')
     window = Window(X_player, O_player)
     pyglet.app.run()
 
