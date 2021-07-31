@@ -240,8 +240,61 @@ class AIPlayer(Player):
                     #     l=j
                     matrix[x[i],y[i]]=0
                 return score
+
+    def alpha_beta(self, matrix, depth=0, maximizer=True,alpha=-10000,beta=10000):#by default the maximizer is True bc it's the frist player
+        # ide=id(matrix)
+        # print(depth,matrix)
+        # print()
+        x,y=np.where(matrix==0)
+        if self.state=='X': n=1
+        else : n=2
+        p=permute(n) #n is maximizer player nd p is minimizer 
+        score=evaluate(matrix) #return +10 if x wins -10 if 0 wins 0 if tie nd -1 if game still on
+        # print(depth , matrix)
+        if score!=-1: 
+            if n==1:
+                return score
+            else : return -score
+        else:
+            if maximizer:
+                score=-10000
+                
+                for i in range(len(x)):
+                    
+                        
+                    matrix[x[i],y[i]]=n 
+                    value=self.alpha_beta(matrix,depth+1,False,alpha,beta)
+                    score=max(score,value)-depth
+                    matrix[x[i],y[i]]=0
+                    if score>=beta:
+                        return score
+                    alpha=max(alpha,score)
+                    # if score==value:
+                    #     k=i
+                    #     l=j
+                    
+                return score
+            else :
+                score=10000
+                
+                for i in range(len(x)):
+                    
+                        
+                    matrix[x[i],y[i]]=p 
+                    value=self.alpha_beta(matrix,depth+1,True,alpha,beta)
+                    score=min(score,value)+depth
+                    # if score==value :
+                    #     k=i
+                    #     l=j
+                    matrix[x[i],y[i]]=0
+                    if score<=alpha:
+                        return score
+                    beta=min(beta,score)
+                return score
         
     def choose_move(self,matrix):
+        alpha=-10000
+        beta=10000
         x,y=np.where(matrix==0)
         k=0
         l=0
@@ -252,13 +305,17 @@ class AIPlayer(Player):
         k,l=-1,-1
         for i in range(len(x)):
             matrix[x[i],y[i]]=n
-            score=self.mini_max(matrix,0,False)
-            # print(score,x[i],y[i])
+            score=self.alpha_beta(matrix,0,False,alpha,beta)
+            print(score,x[i],y[i])
             if score>best_score:
                 best_score=score
-
+            
                 k,l=x[i],y[i]
             matrix[x[i],y[i]]=0
+            # if score>=beta:
+            #     break
+            # alpha=max(alpha,score)
+            # print(best_score)
         return k,l,False
     # else:
         #     best_score=+10000
