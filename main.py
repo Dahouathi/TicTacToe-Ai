@@ -13,6 +13,11 @@ W=height/size
 def permute(n):
     if n==1 :return 2
     if n==2 : return 1
+
+A=np.random.rand(3,3)  
+table=dict()
+def id(matrix):
+    return np.trace(np.dot(A,matrix))
 class Player():
     """ class player contain the type of the player"""
     def __init__(self,state) :
@@ -48,9 +53,18 @@ class Player():
                     if matrix[i,j]==n:
                         # print('ani 5tart')
                         # print(i,j)
-                        if size-i>=3 and size-j >=3 :
+                        if i>=2 and size-j>=2:
+                            for k in range(min(size-j,3)):
+                                if matrix[i-k,j+k]==n:
+                                    count+=1
+                            if count ==3:
+                                print('{} player Wins '.format(self.state))
+                                self.wins=True
+                                exit = True
+                            else : count=0
+                        if size-i>=2 and size-j >=2 :
                             
-                            for k in range(size-i):
+                            for k in range(min(size-j,min(size-i,3))):
                                 if matrix[i+k,j+k]==n : 
                                     count+=1
                                 if count ==3 : break
@@ -59,9 +73,9 @@ class Player():
                                 self.wins=True
                                 exit = True
                             else : count=0
-                        if size-i >=3:
+                        if size-i >=2:
                         
-                            for k in range(size-i):
+                            for k in range(min(size-i,3)):
                                 if matrix[i+k,j]==n : 
                                     count+=1
                                 if count ==3 : break
@@ -70,8 +84,8 @@ class Player():
                                 self.wins=True
                                 exit = True
                             else : count=0
-                        if size-j >=3:
-                            for k in range(size-j):
+                        if size-j >=2:
+                            for k in range(min(size-j,3)):
                                 if matrix[i,k+j]==n : 
                                     count+=1
                                 if count ==3 : break
@@ -87,9 +101,18 @@ class Player():
                     if matrix[i,j]==n:
                         # print('ani 5tart')
                         # print(i,j)
-                        if size-i>=4 and size-j >=4 :
+                        if i>=3 and size-j>=3:
+                            for k in range(min(size-j,4)):
+                                if matrix[i-k,j+k]==n:
+                                    count+=1
+                            if count ==4:
+                                print('{} player Wins '.format(self.state))
+                                self.wins=True
+                                exit = True
+                            else : count=0
+                        if size-i>=3 and size-j >=3 :
                             
-                            for k in range(size-i):
+                            for k in range(min(size-j,min(size-i,4))):
                                 if matrix[i+k,j+k]==n : 
                                     count+=1
                                 if count ==4 : break
@@ -98,9 +121,9 @@ class Player():
                                 self.wins=True
                                 exit = True
                             else : count=0
-                        if size-i >=4:
+                        if size-i >=3:
                         
-                            for k in range(size-i):
+                            for k in range(min(size-i,4)):
                                 if matrix[i+k,j]==n : 
                                     count+=1
                                 if count ==4 : break
@@ -109,8 +132,8 @@ class Player():
                                 self.wins=True
                                 exit = True
                             else : count=0
-                        if size-j >=4:
-                            for k in range(size-j):
+                        if size-j >=3:
+                            for k in range(min(size-j,4)):
                                 if matrix[i,k+j]==n : 
                                     count+=1
                                 if count ==4 : break
@@ -122,6 +145,9 @@ class Player():
         if exit==True : return True
         # print('next tour')
         return False
+    
+
+     
 
 class RandomPlayer(Player):
     def __init__(self, state):
@@ -167,7 +193,54 @@ class HumanPlayer(Player):
             i=-1
             j=-1
         return i,j,Game_over
+class AIPlayer(Player):
+    def __init__(self, state):
+        super().__init__(state) 
+        self.type='AI'      
+    def mini_max(self, matrix, depth=0, maximizer=True):#by default the maximizer is True bc it's the frist player
+        ide=id(matrix)
+
+        if self.state=='X': n=1
+        else : n=2
+        p=permute(n) #n is maximizer player nd p is minimizer 
+        score=evaluate(matrix)
+        print(depth , matrix)
+        if score!=-1: return score, -1, -1
+        else:
+            if maximizer:
+                score=-10000
+                
+                for i in range(size):
+                    for j in range(size):
+                        if matrix[i,j]==0:
+                            matrix[i,j]=n 
+                            value,k,l=self.mini_max(matrix,depth+1,False)
+                            score=max(score,value)
+                            if score==value:
+                                k=i
+                                l=j
+                            matrix[i,j]=0
+                return score,k,l
+            else :
+                score=10000
+                
+                for i in range(size):
+                    for j in range(size):
+                        if matrix[i,j]==0:
+                            matrix[i,j]=p 
+                            value,k,l=self.mini_max(matrix,depth+1,True)
+                            score=min(score,value)
+                            if score==value :
+                                k=i
+                                l=j
+                            matrix[i,j]=0
+                return score, k, l
         
+    def choose_move(self,matrix):
+        socre,i,j=self.mini_max(matrix)
+        return i,j ,False
+
+
 class Window (pyglet.window.Window):
     def __init__(self, X_player, O_player):
         super(Window, self).__init__(width, height, 'Tic Tac Toe')
@@ -203,6 +276,8 @@ class Window (pyglet.window.Window):
                     cercle=pyglet.shapes.Arc(W*(i+1/2),W*(size-j-1/2),W/2.1,angle=2*pi,start_angle=0,closed=True,color=(0,0,255),batch=self.batch)
                     i,j=j,i
                     self.batch.draw()
+    
+    
     def on_mouse_motion(self, x, y, dx, dy):
         pass
     def on_mouse_press(self, x, y, button, modifiers):
@@ -210,6 +285,7 @@ class Window (pyglet.window.Window):
         if self.current_player.type =='human':
             i=int(x/W)
             j=int(y/W)
+            print('clicked')
             self.current_player.i=size-1-j
             self.current_player.j=i
             print(self.current_player.i,self.current_player.j)
@@ -248,12 +324,22 @@ class Window (pyglet.window.Window):
         if(not X_player.wins and not O_player.wins) : print("it'z a tie")
             
     
-        
+
+def evaluate(matrix):
+    x=Player('X')
+    o=Player('O')
+    x.check_win(matrix)
+    o.check_win(matrix)
+    if x.wins==True :return 10
+    elif o.wins==True : return -10
+    else : 
+        if len(np.where(matrix==0)[0])==0 : return 0
+        else: return -1  
             
         
 if __name__ == '__main__':
-    X_player=HumanPlayer('X')
-    O_player=RandomPlayer('O')
+    X_player=AIPlayer('X')
+    O_player=HumanPlayer('O')
     window = Window(X_player, O_player)
     pyglet.app.run()
 
