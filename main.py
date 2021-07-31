@@ -5,7 +5,7 @@ from pyglet.text import Label
 import numpy as np
 from math import pi
 from random import choice
-from pyglet.window.key import N
+import sqlite3 as sq
 size = 3
 width=480
 height=480
@@ -13,11 +13,34 @@ W=height/size
 def permute(n):
     if n==1 :return 2
     if n==2 : return 1
-
-A=np.random.rand(3,3)  
+np.random.seed(42)
+A=np.random.rand(size,size)  
 table=dict()
 def id(matrix):
     return np.trace(np.dot(A,matrix))
+
+
+con= sq.connect('scores.db')
+cur= con.cursor()
+cur.execute("""CREATE TABLE IF NOT EXISTS Scores
+                (Id INT PRIMARY KEY , Score INT) """)
+
+
+def add_(id,score):
+    cur.execute("REPLACE INTO Scores VALUES ({},{})".format(id,score))
+    con.commit()
+def check_(id):
+    cur.execute("select score from Scores where Id='{}'".format(id))
+    l=cur.fetchone()
+    if l!=None : return l[0]
+    else : return None
+
+add_(0,100)
+print(check_(0))
+# cur.execute("SELECT * FROM Scores")
+
+
+
 class Player():
     """ class player contain the type of the player"""
     def __init__(self,state) :
@@ -242,57 +265,68 @@ class AIPlayer(Player):
                 return score
 
     def alpha_beta(self, matrix, depth=0, maximizer=True,alpha=-10000,beta=10000):#by default the maximizer is True bc it's the frist player
-        # ide=id(matrix)
-        # print(depth,matrix)
-        # print()
-        x,y=np.where(matrix==0)
-        if self.state=='X': n=1
-        else : n=2
-        p=permute(n) #n is maximizer player nd p is minimizer 
-        score=evaluate(matrix) #return +10 if x wins -10 if 0 wins 0 if tie nd -1 if game still on
-        # print(depth , matrix)
-        if score!=-1: 
-            if n==1:
-                return score
-            else : return -score
+        idmatrix=id(matrix)
+        print(len(table))
+        if idmatrix in table.keys() :
+            return table[idmatrix]
         else:
-            if maximizer:
-                score=-10000
-                
-                for i in range(len(x)):
+            # print(depth,matrix)
+            # print()
+            x,y=np.where(matrix==0)
+            if self.state=='X': n=1
+            else : n=2
+            p=permute(n) #n is maximizer player nd p is minimizer 
+            score=evaluate(matrix) #return +10 if x wins -10 if 0 wins 0 if tie nd -1 if game still on
+            # print(depth , matrix)
+            if score!=-1: 
+                if n==1:
+                    table[idmatrix]=score
+                    return score
+                else : 
+                    table[idmatrix]=-score
+                    return -score
+            else:
+                if maximizer:
+                    score=-10000
                     
+                    for i in range(len(x)):
                         
-                    matrix[x[i],y[i]]=n 
-                    value=self.alpha_beta(matrix,depth+1,False,alpha,beta)
-                    score=max(score,value)-depth
-                    matrix[x[i],y[i]]=0
-                    if score>=beta:
-                        return score
-                    alpha=max(alpha,score)
-                    # if score==value:
-                    #     k=i
-                    #     l=j
+                            
+                        matrix[x[i],y[i]]=n 
+                        value=self.alpha_beta(matrix,depth+1,False,alpha,beta)
+                        score=max(score,value)-depth
+                        matrix[x[i],y[i]]=0
+                        if score>=beta:
+                            table[idmatrix]=score
+                            return score
+                        alpha=max(alpha,score)
+                        # if score==value:
+                        #     k=i
+                        #     l=j
+                    table[idmatrix]=score 
+                    return score
+                else :
+                    score=10000
                     
-                return score
-            else :
-                score=10000
-                
-                for i in range(len(x)):
-                    
+                    for i in range(len(x)):
                         
-                    matrix[x[i],y[i]]=p 
-                    value=self.alpha_beta(matrix,depth+1,True,alpha,beta)
-                    score=min(score,value)+depth
-                    # if score==value :
-                    #     k=i
-                    #     l=j
-                    matrix[x[i],y[i]]=0
-                    if score<=alpha:
-                        return score
-                    beta=min(beta,score)
-                return score
+                            
+                        matrix[x[i],y[i]]=p 
+                        value=self.alpha_beta(matrix,depth+1,True,alpha,beta)
+                        score=min(score,value)+depth
+                        # if score==value :
+                        #     k=i
+                        #     l=j
+                        matrix[x[i],y[i]]=0
+                        if score<=alpha:
+                            table[idmatrix]=score
+                            return score
+                        beta=min(beta,score)
+                    table[idmatrix]=score
+                    return score
         
     def choose_move(self,matrix):
+        print(len(table))
         alpha=-10000
         beta=10000
         x,y=np.where(matrix==0)
@@ -306,7 +340,7 @@ class AIPlayer(Player):
         for i in range(len(x)):
             matrix[x[i],y[i]]=n
             score=self.alpha_beta(matrix,0,False,alpha,beta)
-            print(score,x[i],y[i])
+            # print(score,x[i],y[i])
             if score>best_score:
                 best_score=score
             
